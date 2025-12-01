@@ -33,8 +33,8 @@
 
 <script lang="ts" setup>
 import { reactive, ref } from 'vue';
-import axios from 'axios';
 import { message } from 'ant-design-vue';
+import api from '../api/api';
 
 const form = reactive({
   name: '',
@@ -51,10 +51,12 @@ const handleSubmit = async () => {
   }
 
   loading.value = true;
+
   try {
-    const res = await axios.post('http://localhost:3000/contacts', form);
-    
-    if (res && res.data && res.data.id) {
+    const res = await api.post('/contact', form);
+
+    // ✅ Cambiado para reflejar la estructura real del backend
+    if (res && res.data && res.data.contact?.id) {
       message.success('Mensaje enviado correctamente!');
       form.name = '';
       form.email = '';
@@ -64,7 +66,7 @@ const handleSubmit = async () => {
     }
   } catch (err: any) {
     console.error(err);
-    if (err.response && err.response.data && err.response.data.message) {
+    if (err.response?.data?.message) {
       message.error(`Error del servidor: ${err.response.data.message}`);
     } else {
       message.error('Error al enviar el mensaje');
@@ -74,6 +76,7 @@ const handleSubmit = async () => {
   }
 };
 </script>
+
 
 <style scoped>
 .title {

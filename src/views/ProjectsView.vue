@@ -10,32 +10,43 @@
 
           <div v-else>
             <a-row :gutter="[24, 24]">
-              <a-col v-for="project in projects" :key="project.id" :xs="24" :sm="12" :md="8">
+              <a-col
+                v-for="project in projects"
+                :key="project.id"
+                :xs="24"
+                :sm="12"
+                :md="8"
+              >
                 <a-card hoverable style="border-radius:10px;">
                   <!-- Imagen principal -->
                   <a-image
                     v-if="project.image"
-                    :src="getProjectFileUrl(project.image)"
+                    :src="getFileUrl(project.image)"
                     width="100%"
                     style="border-radius:8px; max-height:200px; object-fit:cover;"
                     preview
                   />
+
                   <h3 class="card-title">{{ project.title }}</h3>
                   <p class="description">{{ project.description }}</p>
                   <p class="techstack">
                     <strong>Tecnologías:</strong> {{ project.techStack }}
                   </p>
 
-                  <!-- Carousel de galería -->
+                  <!-- Carousel de imágenes -->
                   <a-carousel
-                    v-if="project.gallery && project.gallery.length"
+                    v-if="project.gallery?.length"
                     autoplay
                     dots
                     style="margin-top:10px;"
                   >
-                    <div v-for="img in project.gallery" :key="img" class="carousel-item">
+                    <div
+                      v-for="img in project.gallery"
+                      :key="img"
+                      class="carousel-item"
+                    >
                       <a-image
-                        :src="getProjectFileUrl(img)"
+                        :src="getFileUrl(img)"
                         width="100%"
                         style="border-radius:8px; max-height:150px; object-fit:cover;"
                         preview
@@ -57,6 +68,7 @@
               </a-col>
             </a-row>
           </div>
+
         </a-card>
       </a-col>
     </a-row>
@@ -67,34 +79,34 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
+// Cambia esto por tu dominio final o variable de entorno
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
+// Tipado del proyecto
 interface Project {
   id: number;
   title: string;
   description: string;
   techStack: string;
+  link?: string;
   image?: string;
   gallery?: string[];
-  link?: string;
 }
 
 const projects = ref<Project[]>([]);
 const loading = ref(true);
 const error = ref(false);
 
-// Genera URL de archivos de proyectos
-const getProjectFileUrl = (filename: string) => {
-  return filename ? `http://localhost:3000/uploads/projects/${filename}?t=${Date.now()}` : '';
-};
+// Obtiene URL del archivo
+const getFileUrl = (file: string) => `${API_URL}/uploads/projects/${file}`;
 
-// Carga proyectos desde backend
+// Carga del backend
 const loadProjects = async () => {
-  loading.value = true;
-  error.value = false;
   try {
-    const res = await axios.get('http://localhost:3000/projects');
-    if (res.data) projects.value = res.data;
-  } catch (err) {
-    console.error('Error al cargar proyectos:', err);
+    const res = await axios.get(`${API_URL}/projects`);
+    projects.value = res.data || [];
+  } catch (e) {
+    console.error(e);
     error.value = true;
   } finally {
     loading.value = false;
@@ -111,45 +123,31 @@ onMounted(loadProjects);
   text-align: center;
   margin-bottom: 30px;
 }
-
 .card-title {
   font-size: 1.2rem;
   font-weight: 500;
   margin-top: 10px;
   color: #096dd9;
 }
-
 .description {
-  font-size: 0.95rem;
   color: #444;
+  
   text-align: justify;
   line-height: 1.5;
   margin-top: 5px;
 }
-
 .techstack {
-  font-size: 0.9rem;
   color: #595959;
   margin-top: 5px;
 }
-
 .carousel-item {
   text-align: center;
 }
-
 .status-message {
   text-align: center;
   margin: 50px 0;
   font-size: 16px;
   color: #555;
 }
-
-.status-message.error {
-  color: red;
-}
-
-a-card:hover {
-  transform: translateY(-3px);
-  transition: transform 0.3s;
-}
+.status-message.error { color: red; }
 </style>

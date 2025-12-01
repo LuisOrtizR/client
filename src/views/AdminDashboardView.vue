@@ -14,7 +14,9 @@ import EmailsSection from '../components/admin/EmailsSection.vue';
 import ProjectsSection from '../components/admin/ProjectsSection.vue';
 
 const router = useRouter();
-const selectedKey = ref<string[]>(['emails']);
+
+// Siempre tendrá un valor seguro
+const selectedKey = ref<string>( 'emails' );
 const collapsed = ref<boolean>(false);
 
 const logout = () => {
@@ -24,11 +26,12 @@ const logout = () => {
   router.replace('/');
 };
 
-const changeSection = (key: string) => {
+const changeSection = (key: string | undefined) => {
+  if (!key) return; 
   if (key === 'logout') {
     logout();
   } else {
-    selectedKey.value = [key];
+    selectedKey.value = key; // ya no es un array
   }
 };
 
@@ -43,7 +46,7 @@ onMounted(() => {
 
 <template>
   <a-layout style="min-height:100vh">
-    <!-- Sidebar principal mejorado -->
+    <!-- Sidebar -->
     <a-layout-sider
       v-model:collapsed="collapsed"
       collapsible
@@ -52,7 +55,6 @@ onMounted(() => {
       style="height: 100vh; position: fixed; top: 0; left: 0; z-index: 100; box-shadow: 2px 0 8px rgba(0,0,0,0.1);"
       theme="dark"
     >
-      <!-- Logo / Header -->
       <div class="sidebar-header">
         <div class="logo-container" v-if="!collapsed">
           <div class="logo-icon">
@@ -63,22 +65,21 @@ onMounted(() => {
             <div class="logo-subtitle">Dashboard</div>
           </div>
         </div>
+
         <div class="logo-collapsed" v-else>
           <UserOutlined style="font-size: 24px;" />
         </div>
       </div>
 
-      <!-- Toggle Button -->
       <div class="sidebar-toggle" @click="collapsed = !collapsed">
         <MenuFoldOutlined v-if="!collapsed" />
         <MenuUnfoldOutlined v-else />
       </div>
 
-      <!-- Menu -->
       <a-menu 
         theme="dark" 
         mode="inline" 
-        v-model:selectedKeys="selectedKey"
+        :selectedKeys="[selectedKey]"
         style="border: none; margin-top: 16px;"
       >
         <a-menu-item key="emails" @click="changeSection('emails')" class="custom-menu-item">
@@ -104,33 +105,32 @@ onMounted(() => {
         </a-menu-item>
       </a-menu>
 
-      <!-- Footer Info -->
       <div class="sidebar-footer" v-if="!collapsed">
         <div class="footer-info">
           <div class="footer-text">Versión 1.0.0</div>
-          <div class="footer-subtext">© 2024 Admin Panel</div>
+          <div class="footer-subtext">© 2025 Admin Panel</div>
         </div>
       </div>
     </a-layout-sider>
 
-    <!-- Contenido ajustado al sidebar -->
+    <!-- Contenido principal -->
     <a-layout :style="{ marginLeft: collapsed ? '80px' : '240px', transition: 'all 0.2s' }">
       <a-layout-content 
-        :style="['emails', 'projects'].includes(selectedKey[0]) ? 'padding: 0; height: 100vh;' : 'padding: 24px; background: #f0f2f5;'"
+        :style="selectedKey === 'emails' || selectedKey === 'projects'
+          ? 'padding: 0; height: 100vh;' 
+          : 'padding: 24px; background: #f0f2f5;'"
       >
-        <!-- Emails Section -->
-        <div v-if="selectedKey[0] === 'emails'" style="height: 100%;">
+        <div v-if="selectedKey === 'emails'" style="height: 100%;">
           <EmailsSection />
         </div>
 
-        <!-- Projects Section -->
-        <div v-else-if="selectedKey[0] === 'projects'" style="height: 100%;">
+        <div v-else-if="selectedKey === 'projects'" style="height: 100%;">
           <ProjectsSection />
         </div>
 
-        <!-- About Me Section -->
-        <div v-else-if="selectedKey[0] === 'about'" class="content-section">
+        <div v-else-if="selectedKey === 'about'" class="content-section">
           <a-card title="Gestión de About Me" :bordered="false">
+            
             <a-form layout="vertical">
               <a-form-item label="Nombre Completo">
                 <a-input placeholder="Tu nombre" size="large" />
@@ -141,19 +141,11 @@ onMounted(() => {
               </a-form-item>
               
               <a-form-item label="Biografía">
-                <a-textarea 
-                  placeholder="Cuéntanos sobre ti..."
-                  :rows="6"
-                />
+                <a-textarea placeholder="Cuéntanos sobre ti..." :rows="6" />
               </a-form-item>
 
               <a-form-item label="Habilidades">
-                <a-select
-                  mode="tags"
-                  placeholder="Añade tus habilidades"
-                  style="width: 100%"
-                  size="large"
-                >
+                <a-select mode="tags" placeholder="Añade tus habilidades" style="width: 100%" size="large">
                 </a-select>
               </a-form-item>
 
@@ -175,12 +167,18 @@ onMounted(() => {
                 </a-button>
               </a-form-item>
             </a-form>
+
           </a-card>
         </div>
       </a-layout-content>
     </a-layout>
   </a-layout>
 </template>
+
+<style scoped>
+/* ==== tus estilos, no toco nada ==== */
+</style>
+
 
 <style scoped>
 .sidebar-header {

@@ -13,8 +13,8 @@
           <!-- Contenido principal -->
           <div v-else>
             <!-- Layout: Imagen principal y descripción -->
-            <a-row :gutter="24" align="middle" v-if="about.description || (about.images && about.images.length)">
-              <a-col :xs="24" :md="8" v-if="about.images && about.images.length">
+            <a-row :gutter="24" align="middle" v-if="about.description || about.images.length">
+              <a-col :xs="24" :md="8" v-if="about.images.length">
                 <a-image
                   :src="getFileUrl(about.images[0])"
                   width="100%"
@@ -23,7 +23,7 @@
                 />
               </a-col>
 
-              <a-col :xs="24" :md="about.images && about.images.length ? 16 : 24">
+              <a-col :xs="24" :md="about.images.length ? 16 : 24">
                 <p class="description">{{ about.description || 'No hay descripción disponible.' }}</p>
               </a-col>
             </a-row>
@@ -44,7 +44,7 @@
             </div>
 
             <!-- Carousel de imágenes restantes -->
-            <div v-if="about.images && about.images.length > 1" class="section">
+            <div v-if="about.images.length > 1" class="section">
               <h3 class="subtitle">Galería</h3>
               <a-carousel autoplay dots>
                 <div v-for="img in about.images.slice(1)" :key="img" class="carousel-item">
@@ -66,29 +66,38 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import api from '../api/api';
 
 interface AboutMe {
   description: string;
-  cv?: string;
-  images?: string[];
+  cv: string;
+  images: string[];
 }
 
-const about = ref<AboutMe>({ description: '' });
+const about = ref<AboutMe>({
+  description: '',
+  cv: '',
+  images: []
+});
+
 const loading = ref(true);
 const error = ref(false);
 
-// Genera URL de archivos
-const getFileUrl = (filename: string) => {
-  return filename ? `http://localhost:3000/uploads/aboutme/${filename}?t=${Date.now()}` : '';
+// URL base del servidor
+const BASE_URL = import.meta.env.VITE_API_URL ?? 'https://server-production-8a52.up.railway.app';
+
+// Función para obtener la URL completa de un archivo
+const getFileUrl = (filename?: string) => {
+  return filename ? `${BASE_URL}/uploads/aboutme/${filename}?t=${Date.now()}` : '';
 };
 
-// Cargar datos del backend
+// Cargar datos desde el backend
 const loadAboutMe = async () => {
   loading.value = true;
   error.value = false;
   try {
-    const res = await axios.get('http://localhost:3000/about-me');
+    const res = await api.get('/about-me');
+    console.log('Respuesta AboutMe:', res.data); // Para depurar
     if (res.data) about.value = res.data;
   } catch (err) {
     console.error('Error al cargar AboutMe:', err);
@@ -119,7 +128,7 @@ onMounted(loadAboutMe);
   font-size: 17px;
   line-height: 2;
   color: #444;
-  text-align: justify; /* Para que no quede pegado a la imagen */
+  text-align: justify;
   padding-left: 10px;
 }
 

@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
-import axios from 'axios';
+import api from '../api/api';
 
 const router = useRouter();
 const loading = ref(false);
@@ -17,24 +17,22 @@ const handleLogin = async () => {
   loading.value = true;
 
   try {
-    const res = await axios.post('http://localhost:3000/auth/login', {
+    const res = await api.post('/auth/login', {
       email: form.value.email,
       password: form.value.password
     });
 
-    // Guardar token JWT en localStorage
     localStorage.setItem('adminToken', res.data.access_token);
-    localStorage.setItem('adminTokenExpiry', (Date.now() + parseInt(res.data.expiresIn) * 1000).toString());
+    localStorage.setItem(
+      'adminTokenExpiry',
+      (Date.now() + parseInt(res.data.expiresIn) * 1000).toString()
+    );
 
     message.success('¡Bienvenido al Dashboard!');
     router.push('/admin');
   } catch (err: any) {
     console.error(err);
-    if (err.response?.data?.message) {
-      message.error(err.response.data.message);
-    } else {
-      message.error('Error al iniciar sesión');
-    }
+    message.error(err.response?.data?.message || 'Error al iniciar sesión');
   } finally {
     loading.value = false;
   }

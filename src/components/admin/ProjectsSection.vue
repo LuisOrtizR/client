@@ -47,7 +47,7 @@ const formData = ref<Partial<Project>>({
   link: '',
 });
 
-// Control de archivos
+// Archivos
 const imageFile = ref<File | null>(null);
 const galleryFiles = ref<File[]>([]);
 const imagePreview = ref<string>('');
@@ -57,7 +57,9 @@ const loadProjects = async () => {
   loading.value = true;
   try {
     const res = await axios.get<Project[]>(BASE_URL);
-    projects.value = res.data.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+    projects.value = res.data.sort((a, b) =>
+      +new Date(b.createdAt) - +new Date(a.createdAt)
+    );
   } catch {
     message.error('Error al cargar los proyectos');
   } finally {
@@ -102,7 +104,8 @@ const openEditModal = (project: Project) => {
   imageFile.value = null;
   galleryFiles.value = [];
   imagePreview.value = project.image ? `${UPLOADS_URL}/${project.image}` : '';
-  galleryPreviews.value = project.gallery?.map(img => `${UPLOADS_URL}/${img}`) || [];
+  galleryPreviews.value =
+    project.gallery?.map((img) => `${UPLOADS_URL}/${img}`) || [];
   isModalOpen.value = true;
 };
 
@@ -113,7 +116,7 @@ const handleImageChange = (file: File) => {
     imagePreview.value = e.target?.result as string;
   };
   reader.readAsDataURL(file);
-  return false; // Prevenir auto-upload
+  return false;
 };
 
 const handleGalleryChange = (file: File) => {
@@ -123,7 +126,7 @@ const handleGalleryChange = (file: File) => {
     galleryPreviews.value.push(e.target?.result as string);
   };
   reader.readAsDataURL(file);
-  return false; // Prevenir auto-upload
+  return false;
 };
 
 const removeGalleryImage = (index: number) => {
@@ -142,42 +145,43 @@ const saveProject = async () => {
   }
 
   loading.value = true;
-  
+
   try {
     const formDataToSend = new FormData();
-    
-    // Añadir campos de texto
+
     formDataToSend.append('title', formData.value.title || '');
     formDataToSend.append('description', formData.value.description || '');
     formDataToSend.append('techStack', formData.value.techStack || '');
     if (formData.value.link) formDataToSend.append('link', formData.value.link);
-    
-    // Añadir imagen principal si existe
+
     if (imageFile.value) {
       formDataToSend.append('image', imageFile.value);
     }
-    
-    // Añadir imágenes de galería
+
     galleryFiles.value.forEach((file) => {
       formDataToSend.append('gallery', file);
     });
 
     if (isEditing.value && selectedProject.value) {
-      await axios.put(`${BASE_URL}/${selectedProject.value.id}`, formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      await axios.put(
+        `${BASE_URL}/${selectedProject.value.id}`,
+        formDataToSend,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
       message.success('Proyecto actualizado');
     } else {
       await axios.post(BASE_URL, formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       message.success('Proyecto creado');
     }
-    
+
     isModalOpen.value = false;
     selectedProject.value = null;
     await loadProjects();
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error:', error);
     message.error('Error al guardar el proyecto');
   } finally {
@@ -196,7 +200,8 @@ const deleteProject = async (id: number) => {
       try {
         await axios.delete(`${BASE_URL}/${id}`);
         message.success('Proyecto eliminado');
-        if (selectedProject.value?.id === id) selectedProject.value = null;
+        if (selectedProject.value?.id === id)
+          selectedProject.value = null;
         await loadProjects();
       } catch {
         message.error('Error al eliminar');
@@ -206,17 +211,23 @@ const deleteProject = async (id: number) => {
 };
 
 const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('es', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  return new Date(dateStr).toLocaleDateString('es', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
   });
+};
+
+// ✅ SOLUCIÓN: función segura para abrir enlaces
+const openLink = (url: string) => {
+  if (url) window.open(url, "_blank");
 };
 
 onMounted(() => {
   loadProjects();
 });
 </script>
+
 
 <template>
   <div class="projects-container">
@@ -331,7 +342,7 @@ onMounted(() => {
                   </div>
 
                   <div class="project-actions">
-                    <a-button size="small" v-if="project.link" @click.stop="window.open(project.link)" type="link">
+                    <a-button size="small" v-if="project.link" @click.stop="openLink(project.link)" type="link">
                       <LinkOutlined /> Ver demo
                     </a-button>
                     <a-button size="small" type="primary" @click.stop="openEditModal(project)">
